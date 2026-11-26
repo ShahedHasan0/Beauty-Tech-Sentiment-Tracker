@@ -1,6 +1,7 @@
 import pandas as pd
 from transformers import pipeline
 from pathlib import Path
+from datetime import datetime, timezone
 
 #Load the sentiment model
 model_name = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
@@ -32,24 +33,54 @@ def analyze_sentiment(df):
 #Run sentiment analysis
 def main():
     input_file = Path("data/headlines.csv")
+    output_file = Path("data/sentiment_results.csv")
 
-    #Read the collected headlines
+    #Read the latest collected headlines
     df = pd.read_csv(input_file)
 
-    print(f"Analyzing {len(df)} headlines...")
+    #Read previous results if the file exists
+    if output_file.exists():
+        old_df = pd.read_csv(output_file)
+    else:
+        old_df = pd.DataFrame()
 
-    #Analyze sentiment
-    df = analyze_sentiment(df)
+    #Find articles that have not been analyzed before
+    if not old_df.empty:
+        old_articles = set(
+            zip(old_df["brand"], old_df["link"])
+        )
 
-    #Save results
-    output_file = Path("data/sentiment_results.csv")
+        df = df[
+            ~pd.Series(
+                list(zip(df["brand"], df["link"])),
+                index=df.index
+            ).isin(old_articles)
+        ]
+
+    print(f"New articles to analyze: {len(df)}")
+
+    #Analyze only new articles
+    if not df.empty:
+        df = analyze_sentiment(df)
+
+        #Record when articles were collected
+        df["collected_at"] = datetime.now(timezone.utc).isoformat()
+
+        #Combine old and new results
+        df = pd.concat([old_df, df], ignore_index=True)
+    else:
+        df = old_df
+
+    #Save the complete historical dataset
     df.to_csv(output_file, index=False, encoding="utf-8-sig")
 
     print("\nSentiment analysis complete!")
+    print(f"Total saved articles: {len(df)}")
     print(f"Results saved to: {output_file}")
 
-    print("\nSentiment summary:")
-    print(df["sentiment"].value_counts())
+    if not df.empty:
+        print("\nSentiment summary:")
+        print(df["sentiment"].value_counts())
 
 
 if __name__ == "__main__":
