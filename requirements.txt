@@ -1,0 +1,8 @@
+feedparser
+pandas
+torch
+transformers
+sentencepiece
+protobuf
+streamlit
+pytest
