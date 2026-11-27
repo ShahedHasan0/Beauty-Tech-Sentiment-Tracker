@@ -97,7 +97,8 @@ The dashboard displays:
 
 ### Screenshot
 
-A screenshot of the dashboard will be added here.
+![Beauty-Tech Sentiment Tracker Dashboard](images/dashboard.png)
+![Beauty-Tech Sentiment Tracker Dashboard page 2](images/dashboard2.png)
 
 ## Running Tests
 
